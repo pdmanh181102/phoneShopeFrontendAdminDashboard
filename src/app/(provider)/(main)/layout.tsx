@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 
-import { App, ConfigProvider, Layout, Menu, theme } from "antd";
+import { App, Layout, Menu } from "antd";
 import Sider from "antd/es/layout/Sider";
 import { Content, Footer } from "antd/es/layout/layout";
 import { ItemType } from "antd/es/menu/interface";
@@ -29,25 +29,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
   );
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.compactAlgorithm,
-        token: {
-          fontSize: 20,
-        },
-      }}
-    >
-      <App>
-        <Layout style={{ minHeight: "100vh" }}>
-          <Sider collapsible collapsed={collapsed} breakpoint="md" onCollapse={(value: boolean) => setCollapsed(value)}>
-            <Menu defaultSelectedKeys={["1"]} mode="inline" items={menuItems} theme="dark" />
-          </Sider>
-          <Layout>
-            <Content className="m-5">{children}</Content>
-            <Footer>Ant Design ©{new Date().getFullYear()} Created by Ant UED</Footer>
-          </Layout>
+    <App>
+      <Layout style={{ minHeight: "100vh" }}>
+        <Sider collapsible collapsed={collapsed} breakpoint="md" onCollapse={(value: boolean) => setCollapsed(value)}>
+          <Menu defaultSelectedKeys={["1"]} mode="inline" items={menuItems} theme="dark" />
+        </Sider>
+        <Layout>
+          <Content className="m-5">{children}</Content>
+          <Footer>Ant Design ©{new Date().getFullYear()} Created by Ant UED</Footer>
         </Layout>
-      </App>
-    </ConfigProvider>
+      </Layout>
+    </App>
   );
 }
