@@ -1,0 +1,125 @@
+import { ProductVariantOptionMap, VariantAttribute, VariantOption } from "@/app/_shared/d/dto";
+import { Attribute } from "../d/variant_data_type";
+
+type RawProductVariantOption = ProductVariantOptionMap;
+
+export default class VariantDataHelper {
+  /**
+   * Chuyển đổi dữ liệu các Product Variant Option thành cấu trúc cây Attribute lồng nhau.
+   *
+   * @param rawData Mảng các đối tượng RawProductVariantOption từ dữ liệu đầu vào.
+   * @param allVariantOptions Mảng tất cả các VariantOption có sẵn.
+   * @param allVariantAttributes Mảng tất cả các VariantAttribute có sẵn.
+   * @param rootAttributeUid UID của thuộc tính gốc (ví dụ: "bonho").
+   * @returns Đối tượng Attribute gốc với cấu trúc lồng nhau đã được xây dựng.
+   * @throws Error nếu không tìm thấy thuộc tính gốc.
+   */
+  static TransformProductVariantOptions(
+    rawData: RawProductVariantOption[],
+    allVariantOptions: VariantOption[],
+    allVariantAttributes: VariantAttribute[],
+    rootAttributeUid: string
+  ): Attribute {
+    // 1. Tạo các bản đồ (Maps) để tra cứu nhanh
+    const optionMap = new Map<string, VariantOption>();
+    allVariantOptions.forEach((option) => optionMap.set(option.uid, option));
+
+    const attributeMap = new Map<string, VariantAttribute>();
+    allVariantAttributes.forEach((attr) => attributeMap.set(attr.uid, attr));
+
+    // 2. Nhóm các lựa chọn theo productVariantUid và sắp xếp theo level
+    const groupedByProductVariant: Map<string, RawProductVariantOption[]> = new Map();
+
+    rawData.forEach((item) => {
+      if (!groupedByProductVariant.has(item.productVariantUid)) {
+        groupedByProductVariant.set(item.productVariantUid, []);
+      }
+      groupedByProductVariant.get(item.productVariantUid)!.push(item);
+    });
+
+    // Sắp xếp các lựa chọn trong mỗi productVariant theo level
+    groupedByProductVariant.forEach((options) => {
+      options.sort((a, b) => a.level - b.level);
+    });
+
+    console.log(groupedByProductVariant);
+
+    // 3. Xây dựng cấu trúc cây đệ quy
+    // Hàm đệ quy để thêm một chuỗi options vào cây Attribute
+    function addOptionsToAttributeTree(
+      targetAttribute: Attribute,
+      optionsSequence: RawProductVariantOption[],
+      currentIndex: number,
+      productVariantUid: string
+    ) {
+      if (currentIndex >= optionsSequence.length) {
+        return; // Đã xử lý hết chuỗi options
+      }
+
+      const currentRawOption = optionsSequence[currentIndex];
+      const actualOption = optionMap.get(currentRawOption.optionUid);
+
+      if (!actualOption) {
+        console.warn(`Option with uid '${currentRawOption.optionUid}' not found. Skipping.`);
+        return;
+      }
+
+      // Tìm hoặc tạo Option trong targetAttribute
+      let existingOptionInTargetAttribute = targetAttribute.options.find((opt) => opt.uid === actualOption.uid);
+
+      if (!existingOptionInTargetAttribute) {
+        existingOptionInTargetAttribute = {
+          uid: actualOption.uid,
+          name: actualOption.name,
+        };
+        targetAttribute.options.push(existingOptionInTargetAttribute);
+      }
+
+      // Nếu đây là option cuối cùng trong chuỗi cho productVariant này
+      if (currentIndex === optionsSequence.length - 1) {
+        existingOptionInTargetAttribute.productVariantUid = productVariantUid;
+      } else {
+        // Nếu không phải option cuối cùng, thì nó sẽ có một Attribute con
+        if (!existingOptionInTargetAttribute.attribute) {
+          // Tạo Attribute con dựa trên Attribute của option tiếp theo
+          const nextRawOption = optionsSequence[currentIndex + 1];
+          const nextActualOption = optionMap.get(nextRawOption.optionUid);
+          const nextActualAttribute = nextActualOption ? attributeMap.get(nextActualOption.attributeUid) : undefined;
+
+          if (nextActualAttribute) {
+            existingOptionInTargetAttribute.attribute = {
+              uid: nextActualAttribute.uid,
+              name: nextActualAttribute.name,
+              options: [],
+            };
+          } else {
+            console.warn(`Could not determine next attribute for option '${actualOption.uid}'. Skipping remaining sequence.`);
+            return; // Dừng lại nếu không tìm thấy attribute tiếp theo
+          }
+        }
+        // Gọi đệ quy cho cấp độ tiếp theo
+        addOptionsToAttributeTree(existingOptionInTargetAttribute.attribute!, optionsSequence, currentIndex + 1, productVariantUid);
+      }
+    }
+
+    // Khởi tạo Attribute gốc
+    const rootAttributeDefinition = attributeMap.get(rootAttributeUid);
+
+    if (!rootAttributeDefinition) {
+      throw new Error(`Root attribute with uid '${rootAttributeUid}' not found.`);
+    }
+
+    const finalResult: Attribute = {
+      uid: rootAttributeDefinition.uid,
+      name: rootAttributeDefinition.name,
+      options: [],
+    };
+
+    // Duyệt qua từng productVariant đã nhóm và thêm vào cây
+    groupedByProductVariant.forEach((options, productVariantUid) => {
+      addOptionsToAttributeTree(finalResult, options, 0, productVariantUid);
+    });
+
+    return finalResult;
+  }
+}
