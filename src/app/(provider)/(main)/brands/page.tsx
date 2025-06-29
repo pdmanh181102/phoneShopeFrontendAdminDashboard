@@ -1,7 +1,7 @@
 import { Flex } from "antd";
-import BodyTemplate from "./template/body/body";
-import FooterTemplate from "./template/footer/footer";
-import HeaderTemplate from "./template/header/header";
+import BodyTemplate from "./_template/body/body";
+import FooterTemplate from "./_template/footer/footer";
+import HeaderTemplate from "./_template/header/header";
 
 const BrandsPage = () => {
   return (

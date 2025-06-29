@@ -1,12 +1,14 @@
 "use client";
 
 import BrandClient from "@/apiClient/brand/BrandClient";
+import DeleteButton from "@/components/button/deleteButton/DeleteButton";
+import EditButton from "@/components/button/editButton/EditButton";
+import SmallImage from "@/components/smallImage/SmallImage";
 import { PhotoUrlHelper } from "@/helpers/photoUrl/PhotoUrlHelper";
 import { BrandResponse } from "@/models/apiResponse/brand/BrandResponse";
 import { PageResponse } from "@/models/apiResponse/page/PageResponse";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Button, Flex, Image, Popconfirm, Table, TableColumnsType, TablePaginationConfig, message } from "antd";
+import { Button, Flex, Popconfirm, Table, TableColumnsType, TablePaginationConfig, message } from "antd";
 import { FilterValue, SorterResult } from "antd/es/table/interface";
 import { useMemo, useState } from "react";
 import FormCreate from "./components/formCreate/FormCreate";
@@ -64,8 +66,7 @@ const BodyTemplate = () => {
         title: "Hình ảnh",
         dataIndex: "photoUrl",
         key: "photo",
-        render: (url: string) =>
-          url ? <Image src={PhotoUrlHelper.GetPhotoUrl(url)} alt="Brand" style={{ width: 50, height: 50, objectFit: "cover" }} /> : "N/A",
+        render: (url: string) => (url ? <SmallImage src={PhotoUrlHelper.GetPhotoUrl(url)} alt="Brand" /> : "N/A"),
       },
       {
         title: "Ngày tạo",
@@ -95,13 +96,13 @@ const BodyTemplate = () => {
               cancelText="Hủy"
               okType="danger"
             >
-              <Button type="text" danger icon={<DeleteOutlined />} size="small" loading={deleteBrandMutation.isPending}>
+              <DeleteButton type="text" danger size="small" loading={deleteBrandMutation.isPending}>
                 Xóa
-              </Button>
+              </DeleteButton>
             </Popconfirm>
-            <Button type="link" icon={<EditOutlined />} size="small" loading={deleteBrandMutation.isPending} href={createLinkEdit(record.uid)}>
+            <EditButton type="link" size="small" loading={deleteBrandMutation.isPending} href={createLinkEdit(record.uid)}>
               Sửa
-            </Button>
+            </EditButton>
           </Flex>
         ),
       },
