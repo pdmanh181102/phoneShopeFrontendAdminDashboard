@@ -12,17 +12,17 @@ interface FormEditNameProps {
   onSuccess: () => void;
 }
 
-interface CreateBrandFormData {
+interface FormData {
   name: string;
 }
 
 const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, onCancel, onSuccess }) => {
-  const [form] = Form.useForm<CreateBrandFormData>();
+  const [form] = Form.useForm<FormData>();
   const [nameToCheck, setNameToCheck] = useState<string>("");
 
-  // Mutation để tạo brand mới
-  const createBrandMutation = useMutation({
-    mutationFn: (data: CreateBrandFormData) => BrandClient.updateName(uid, data.name),
+  // Mutation để tạo item mới
+  const createItemMutation = useMutation({
+    mutationFn: (data: FormData) => BrandClient.updateName(uid, data.name),
     onSuccess: () => {
       getMessageApi().success("Sửa tên thương hiệu thành công!");
       form.resetFields();
@@ -34,7 +34,7 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, onCancel, onS
     },
   });
 
-  // Query để check tên brand có tồn tại không với debounce
+  // Query để check tên item có tồn tại không với debounce
   const { data: isNameExists, isFetching: isCheckingName } = useQuery({
     queryKey: ["check-brand-name", nameToCheck],
     queryFn: () => BrandClient.checkNameExists(nameToCheck),
@@ -60,7 +60,7 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, onCancel, onS
         return;
       }
 
-      createBrandMutation.mutate(values);
+      createItemMutation.mutate(values);
     } catch (error) {
       console.error("Validation failed:", error);
     }
@@ -84,8 +84,8 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, onCancel, onS
     }
   };
 
-  // Custom validator cho tên brand
-  const validateBrandName = async (_: any, value: string) => {
+  // Custom validator cho tên item
+  const validateItemName = async (_: any, value: string) => {
     if (!value || value.trim().length === 0) {
       return Promise.reject(new Error("Vui lòng nhập tên thương hiệu"));
     }
@@ -112,7 +112,7 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, onCancel, onS
         <Form.Item
           label="Tên thương hiệu"
           name="name"
-          rules={[{ validator: validateBrandName }]}
+          rules={[{ validator: validateItemName }]}
           validateStatus={isCheckingName ? "validating" : isNameExists ? "error" : nameToCheck.length >= 2 && !isNameExists ? "success" : ""}
           help={
             isCheckingName
@@ -130,7 +130,7 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, onCancel, onS
         <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <Button onClick={handleCancel}>Hủy</Button>
-            <Button type="primary" htmlType="submit" loading={createBrandMutation.isPending} disabled={isCheckingName || isNameExists}>
+            <Button type="primary" htmlType="submit" loading={createItemMutation.isPending} disabled={isCheckingName || isNameExists}>
               Lưu
             </Button>
           </div>

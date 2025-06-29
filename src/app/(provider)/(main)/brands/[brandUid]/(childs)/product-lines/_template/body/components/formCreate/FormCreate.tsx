@@ -12,17 +12,17 @@ interface FormCreateProps {
   onSuccess: () => void;
 }
 
-interface CreateBrandFormData {
+interface FormData {
   name: string;
 }
 
 const FormCreate: React.FC<FormCreateProps> = ({ brandUid, visible, onCancel, onSuccess }) => {
-  const [form] = Form.useForm<CreateBrandFormData>();
+  const [form] = Form.useForm<FormData>();
   const [nameToCheck, setNameToCheck] = useState<string>("");
 
   // Mutation để tạo brand mới
   const createBrandMutation = useMutation({
-    mutationFn: (data: CreateBrandFormData) => ProductLineClient.create(brandUid, data),
+    mutationFn: (data: FormData) => ProductLineClient.create(brandUid, data),
     onSuccess: () => {
       getMessageApi().success("Thêm dòng sản phẩm thành công!");
       form.resetFields();

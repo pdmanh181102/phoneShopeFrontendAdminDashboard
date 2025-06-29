@@ -1,44 +1,42 @@
-import ProductLineClient from "@/apiClient/productLine/ProductLineClient";
+import ProductStatusClient from "@/apiClient/productStatus/ProductStatusClient";
 import { getMessageApi } from "@/context/message/MessageContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, Form, Input, Modal } from "antd";
 import { debounce } from "lodash";
 import React, { useCallback, useState } from "react";
 
-interface FormEditNameProps {
+interface FormCreateProps {
   visible: boolean;
-  brandUid: string;
-  uid: string;
   onCancel: () => void;
   onSuccess: () => void;
 }
 
-interface FormData {
+interface CreateFormData {
   name: string;
 }
 
-const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onCancel, onSuccess }) => {
-  const [form] = Form.useForm<FormData>();
+const FormCreate: React.FC<FormCreateProps> = ({ visible, onCancel, onSuccess }) => {
+  const [form] = Form.useForm<CreateFormData>();
   const [nameToCheck, setNameToCheck] = useState<string>("");
 
-  // Mutation để tạo item mới
-  const createItemMutation = useMutation({
-    mutationFn: (data: FormData) => ProductLineClient.updateName(uid, data.name),
+  // Mutation để tạo brand mới
+  const createBrandMutation = useMutation({
+    mutationFn: (data: CreateFormData) => ProductStatusClient.create(data),
     onSuccess: () => {
-      getMessageApi().success("Sửa tên dòng sản phẩm thành công!");
+      getMessageApi().success("Thêm trạng thái sản phẩm thành công!");
       form.resetFields();
       setNameToCheck("");
       onSuccess();
     },
     onError: (error: any) => {
-      getMessageApi().error(error?.message || "Có lỗi xảy ra khi sửa tên dòng sản phẩm");
+      getMessageApi().error(error?.message || "Có lỗi xảy ra khi thêm trạng thái sản phẩm");
     },
   });
 
-  // Query để check tên item có tồn tại không với debounce
+  // Query để check tên brand có tồn tại không với debounce
   const { data: isNameExists, isFetching: isCheckingName } = useQuery({
-    queryKey: ["check-product-line-name", nameToCheck],
-    queryFn: () => ProductLineClient.checkNameExists(brandUid, nameToCheck),
+    queryKey: ["check-brand-name", nameToCheck],
+    queryFn: () => ProductStatusClient.checkNameExists(nameToCheck),
     enabled: nameToCheck.length >= 2, // Chỉ check khi có ít nhất 2 ký tự
     staleTime: 30000, // Cache 30 giây
   });
@@ -57,11 +55,11 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onC
 
       // Nếu tên đã tồn tại, không cho submit
       if (isNameExists) {
-        getMessageApi().error("Tên dòng sản phẩm đã tồn tại!");
+        getMessageApi().error("Tên trạng thái sản phẩm đã tồn tại!");
         return;
       }
 
-      createItemMutation.mutate(values);
+      createBrandMutation.mutate(values);
     } catch (error) {
       console.error("Validation failed:", error);
     }
@@ -85,54 +83,54 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onC
     }
   };
 
-  // Custom validator cho tên item
-  const validateItemName = async (_: any, value: string) => {
+  // Custom validator cho tên brand
+  const validateBrandName = async (_: any, value: string) => {
     if (!value || value.trim().length === 0) {
-      return Promise.reject(new Error("Vui lòng nhập tên dòng sản phẩm"));
+      return Promise.reject(new Error("Vui lòng nhập tên trạng thái sản phẩm"));
     }
 
     if (value.trim().length < 2) {
-      return Promise.reject(new Error("Tên dòng sản phẩm phải có ít nhất 2 ký tự"));
+      return Promise.reject(new Error("Tên trạng thái sản phẩm phải có ít nhất 2 ký tự"));
     }
 
     if (value.trim().length > 100) {
-      return Promise.reject(new Error("Tên dòng sản phẩm không được vượt quá 100 ký tự"));
+      return Promise.reject(new Error("Tên trạng thái sản phẩm không được vượt quá 100 ký tự"));
     }
 
     // Kiểm tra trùng lặp với database
     if (value.trim() === nameToCheck && isNameExists) {
-      return Promise.reject(new Error("Tên dòng sản phẩm đã tồn tại"));
+      return Promise.reject(new Error("Tên trạng thái sản phẩm đã tồn tại"));
     }
 
     return Promise.resolve();
   };
 
   return (
-    <Modal title="Sửa tên dòng sản phẩm" open={visible} onCancel={handleCancel} footer={null} width={500} destroyOnHidden>
+    <Modal title="Thêm trạng thái sản phẩm mới" open={visible} onCancel={handleCancel} footer={null} width={500} destroyOnHidden>
       <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
         <Form.Item
-          label="Tên dòng sản phẩm"
+          label="Tên trạng thái sản phẩm"
           name="name"
-          rules={[{ validator: validateItemName }]}
+          rules={[{ validator: validateBrandName }]}
           validateStatus={isCheckingName ? "validating" : isNameExists ? "error" : nameToCheck.length >= 2 && !isNameExists ? "success" : ""}
           help={
             isCheckingName
               ? "Đang kiểm tra tên..."
               : isNameExists
-              ? "Tên dòng sản phẩm đã tồn tại"
+              ? "Tên trạng thái sản phẩm đã tồn tại"
               : nameToCheck.length >= 2 && !isNameExists
-              ? "Tên dòng sản phẩm có thể sử dụng"
+              ? "Tên trạng thái sản phẩm có thể sử dụng"
               : ""
           }
         >
-          <Input placeholder="Nhập tên dòng sản phẩm" onChange={handleNameChange} maxLength={100} showCount />
+          <Input placeholder="Nhập tên trạng thái sản phẩm" onChange={handleNameChange} maxLength={100} showCount />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <Button onClick={handleCancel}>Hủy</Button>
-            <Button type="primary" htmlType="submit" loading={createItemMutation.isPending} disabled={isCheckingName || isNameExists}>
-              Lưu
+            <Button type="primary" htmlType="submit" loading={createBrandMutation.isPending} disabled={isCheckingName || isNameExists}>
+              Thêm trạng thái sản phẩm
             </Button>
           </div>
         </Form.Item>
@@ -141,4 +139,4 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onC
   );
 };
 
-export default FormEditName;
+export default FormCreate;

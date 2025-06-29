@@ -11,17 +11,17 @@ interface FormCreateProps {
   onSuccess: () => void;
 }
 
-interface CreateBrandFormData {
+interface FormData {
   name: string;
 }
 
 const FormCreate: React.FC<FormCreateProps> = ({ visible, onCancel, onSuccess }) => {
-  const [form] = Form.useForm<CreateBrandFormData>();
+  const [form] = Form.useForm<FormData>();
   const [nameToCheck, setNameToCheck] = useState<string>("");
 
   // Mutation để tạo brand mới
   const createBrandMutation = useMutation({
-    mutationFn: (data: CreateBrandFormData) => BrandClient.create(data),
+    mutationFn: (data: FormData) => BrandClient.create(data),
     onSuccess: () => {
       getMessageApi().success("Thêm thương hiệu thành công!");
       form.resetFields();

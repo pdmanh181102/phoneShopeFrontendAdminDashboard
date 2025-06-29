@@ -3,10 +3,11 @@
 import ProductLineClient from "@/apiClient/productLine/ProductLineClient";
 import DeleteButton from "@/components/button/deleteButton/DeleteButton";
 import EditButton from "@/components/button/editButton/EditButton";
+import { getMessageApi } from "@/context/message/MessageContext";
 import { PageResponse } from "@/models/apiResponse/page/PageResponse";
 import { ProductLineResponse } from "@/models/apiResponse/productLine/ProductLineResponse";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Button, Flex, Popconfirm, Table, TableColumnsType, TablePaginationConfig, message } from "antd";
+import { Button, Flex, Popconfirm, Table, TableColumnsType, TablePaginationConfig } from "antd";
 import { FilterValue, SorterResult } from "antd/es/table/interface";
 import { useMemo, useState } from "react";
 import FormCreate from "./components/formCreate/FormCreate";
@@ -40,15 +41,15 @@ const BodyTemplate = ({ brandUid, productLineUid }: TemplateProps) => {
     },
   });
 
-  // Mutation để xóa brand
-  const deleteBrandMutation = useMutation({
+  // Mutation để xóa item
+  const deleteItemMutation = useMutation({
     mutationFn: (uid: string) => ProductLineClient.delete(uid),
     onSuccess: () => {
-      message.success("Xóa dòng sản phẩm thành công!");
+      getMessageApi().success("Xóa dòng sản phẩm thành công!");
       refetch(); // Refresh danh sách sau khi xóa
     },
     onError: (error: any) => {
-      message.error(error?.message || "Có lỗi xảy ra khi xóa dòng sản phẩm");
+      getMessageApi().error(error?.message || "Có lỗi xảy ra khi xóa dòng sản phẩm");
     },
   });
 
@@ -93,18 +94,18 @@ const BodyTemplate = ({ brandUid, productLineUid }: TemplateProps) => {
               cancelText="Hủy"
               okType="danger"
             >
-              <DeleteButton type="text" danger size="small" loading={deleteBrandMutation.isPending}>
+              <DeleteButton type="text" danger size="small" loading={deleteItemMutation.isPending}>
                 Xóa
               </DeleteButton>
             </Popconfirm>
-            <EditButton type="link" size="small" loading={deleteBrandMutation.isPending} href={createLinkEdit(record.uid)}>
+            <EditButton type="link" size="small" loading={deleteItemMutation.isPending} href={createLinkEdit(record.uid)}>
               Sửa
             </EditButton>
           </Flex>
         ),
       },
     ],
-    [deleteBrandMutation.isPending]
+    [deleteItemMutation.isPending]
   );
 
   const handleTableChange = (
@@ -153,7 +154,7 @@ const BodyTemplate = ({ brandUid, productLineUid }: TemplateProps) => {
   };
 
   const handleDelete = (uid: string) => {
-    deleteBrandMutation.mutate(uid);
+    deleteItemMutation.mutate(uid);
   };
 
   console.log("product lines: ", data?.content);

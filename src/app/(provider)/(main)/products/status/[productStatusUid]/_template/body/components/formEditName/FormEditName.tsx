@@ -1,4 +1,4 @@
-import ProductLineClient from "@/apiClient/productLine/ProductLineClient";
+import ProductStatusClient from "@/apiClient/productStatus/ProductStatusClient";
 import { getMessageApi } from "@/context/message/MessageContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, Form, Input, Modal } from "antd";
@@ -7,7 +7,6 @@ import React, { useCallback, useState } from "react";
 
 interface FormEditNameProps {
   visible: boolean;
-  brandUid: string;
   uid: string;
   onCancel: () => void;
   onSuccess: () => void;
@@ -17,28 +16,28 @@ interface FormData {
   name: string;
 }
 
-const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onCancel, onSuccess }) => {
+const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, onCancel, onSuccess }) => {
   const [form] = Form.useForm<FormData>();
   const [nameToCheck, setNameToCheck] = useState<string>("");
 
   // Mutation để tạo item mới
   const createItemMutation = useMutation({
-    mutationFn: (data: FormData) => ProductLineClient.updateName(uid, data.name),
+    mutationFn: (data: FormData) => ProductStatusClient.updateName(uid, data.name),
     onSuccess: () => {
-      getMessageApi().success("Sửa tên dòng sản phẩm thành công!");
+      getMessageApi().success("Sửa tên trạng thái sản phẩm thành công!");
       form.resetFields();
       setNameToCheck("");
       onSuccess();
     },
     onError: (error: any) => {
-      getMessageApi().error(error?.message || "Có lỗi xảy ra khi sửa tên dòng sản phẩm");
+      getMessageApi().error(error?.message || "Có lỗi xảy ra khi sửa tên trạng thái sản phẩm");
     },
   });
 
   // Query để check tên item có tồn tại không với debounce
   const { data: isNameExists, isFetching: isCheckingName } = useQuery({
-    queryKey: ["check-product-line-name", nameToCheck],
-    queryFn: () => ProductLineClient.checkNameExists(brandUid, nameToCheck),
+    queryKey: ["check-product-status-name", nameToCheck],
+    queryFn: () => ProductStatusClient.checkNameExists(nameToCheck),
     enabled: nameToCheck.length >= 2, // Chỉ check khi có ít nhất 2 ký tự
     staleTime: 30000, // Cache 30 giây
   });
@@ -57,7 +56,7 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onC
 
       // Nếu tên đã tồn tại, không cho submit
       if (isNameExists) {
-        getMessageApi().error("Tên dòng sản phẩm đã tồn tại!");
+        getMessageApi().error("Tên trạng thái sản phẩm đã tồn tại!");
         return;
       }
 
@@ -88,30 +87,30 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onC
   // Custom validator cho tên item
   const validateItemName = async (_: any, value: string) => {
     if (!value || value.trim().length === 0) {
-      return Promise.reject(new Error("Vui lòng nhập tên dòng sản phẩm"));
+      return Promise.reject(new Error("Vui lòng nhập tên trạng thái sản phẩm"));
     }
 
     if (value.trim().length < 2) {
-      return Promise.reject(new Error("Tên dòng sản phẩm phải có ít nhất 2 ký tự"));
+      return Promise.reject(new Error("Tên trạng thái sản phẩm phải có ít nhất 2 ký tự"));
     }
 
     if (value.trim().length > 100) {
-      return Promise.reject(new Error("Tên dòng sản phẩm không được vượt quá 100 ký tự"));
+      return Promise.reject(new Error("Tên trạng thái sản phẩm không được vượt quá 100 ký tự"));
     }
 
     // Kiểm tra trùng lặp với database
     if (value.trim() === nameToCheck && isNameExists) {
-      return Promise.reject(new Error("Tên dòng sản phẩm đã tồn tại"));
+      return Promise.reject(new Error("Tên trạng thái sản phẩm đã tồn tại"));
     }
 
     return Promise.resolve();
   };
 
   return (
-    <Modal title="Sửa tên dòng sản phẩm" open={visible} onCancel={handleCancel} footer={null} width={500} destroyOnHidden>
+    <Modal title="Sửa tên trạng thái sản phẩm" open={visible} onCancel={handleCancel} footer={null} width={500} destroyOnHidden>
       <Form form={form} layout="vertical" onFinish={handleSubmit} autoComplete="off">
         <Form.Item
-          label="Tên dòng sản phẩm"
+          label="Tên trạng thái sản phẩm"
           name="name"
           rules={[{ validator: validateItemName }]}
           validateStatus={isCheckingName ? "validating" : isNameExists ? "error" : nameToCheck.length >= 2 && !isNameExists ? "success" : ""}
@@ -119,13 +118,13 @@ const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onC
             isCheckingName
               ? "Đang kiểm tra tên..."
               : isNameExists
-              ? "Tên dòng sản phẩm đã tồn tại"
+              ? "Tên trạng thái sản phẩm đã tồn tại"
               : nameToCheck.length >= 2 && !isNameExists
-              ? "Tên dòng sản phẩm có thể sử dụng"
+              ? "Tên trạng thái sản phẩm có thể sử dụng"
               : ""
           }
         >
-          <Input placeholder="Nhập tên dòng sản phẩm" onChange={handleNameChange} maxLength={100} showCount />
+          <Input placeholder="Nhập tên trạng thái sản phẩm" onChange={handleNameChange} maxLength={100} showCount />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>

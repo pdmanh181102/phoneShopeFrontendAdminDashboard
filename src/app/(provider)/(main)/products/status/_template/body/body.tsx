@@ -1,13 +1,11 @@
 "use client";
 
-import BrandClient from "@/apiClient/brand/BrandClient";
+import ProductStatusClient from "@/apiClient/productStatus/ProductStatusClient";
 import DeleteButton from "@/components/button/deleteButton/DeleteButton";
 import EditButton from "@/components/button/editButton/EditButton";
-import SmallImage from "@/components/smallImage/SmallImage";
 import { getMessageApi } from "@/context/message/MessageContext";
-import { PhotoUrlHelper } from "@/helpers/photoUrl/PhotoUrlHelper";
-import { BrandResponse } from "@/models/apiResponse/brand/BrandResponse";
 import { PageResponse } from "@/models/apiResponse/page/PageResponse";
+import { ProductStatusResponse } from "@/models/apiResponse/productStatus/ProductStatusResponse";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, Flex, Popconfirm, Table, TableColumnsType, TablePaginationConfig } from "antd";
 import { FilterValue, SorterResult } from "antd/es/table/interface";
@@ -31,26 +29,38 @@ const BodyTemplate = () => {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const { data, isFetching, refetch } = useQuery<PageResponse<BrandResponse>>({
-    queryKey: ["brands", pagination.page, pagination.size, pagination.sortBy, pagination.direction],
+  const { data, isFetching, refetch } = useQuery<PageResponse<ProductStatusResponse>>({
+    queryKey: ["productStatus", pagination.page, pagination.size, pagination.sortBy, pagination.direction],
     queryFn: () => {
-      return BrandClient.readAll(pagination.page, pagination.size, pagination.sortBy, pagination.direction);
+      return ProductStatusClient.readAll(pagination.page, pagination.size, pagination.sortBy, pagination.direction);
     },
   });
 
   // Mutation để xóa item
   const deleteItemMutation = useMutation({
-    mutationFn: (uid: string) => BrandClient.delete(uid),
+    mutationFn: (uid: string) => ProductStatusClient.delete(uid),
     onSuccess: () => {
-      getMessageApi().success("Xóa thương hiệu thành công!");
+      getMessageApi().success("Xóa trạng thái sản phẩm thành công!");
       refetch(); // Refresh danh sách sau khi xóa
     },
     onError: (error: any) => {
-      getMessageApi().error(error?.message || "Có lỗi xảy ra khi xóa thương hiệu");
+      getMessageApi().error(error?.message || "Có lỗi xảy ra khi xóa trạng thái sản phẩm");
     },
   });
 
-  const columns: TableColumnsType<BrandResponse> = useMemo(
+  // Mutation để xóa item
+  const setDefaultItemMutation = useMutation({
+    mutationFn: (uid: string) => ProductStatusClient.updateDefaultStatus(uid),
+    onSuccess: () => {
+      getMessageApi().success("Đặt trạng thái mặc định thành công!");
+      refetch(); // Refresh danh sách sau khi xóa
+    },
+    onError: (error: any) => {
+      getMessageApi().error(error?.message || "Có lỗi xảy ra khi đặt trạng thái mặc định");
+    },
+  });
+
+  const columns: TableColumnsType<ProductStatusResponse> = useMemo(
     () => [
       {
         title: "UID",
@@ -58,16 +68,22 @@ const BodyTemplate = () => {
         key: "uid",
       },
       {
-        title: "Tên thương hiệu",
+        title: "Tên trạng thái sản phẩm",
         dataIndex: "name",
         key: "name",
         sorter: true,
       },
       {
-        title: "Hình ảnh",
-        dataIndex: "photoUrl",
-        key: "photo",
-        render: (url: string) => (url ? <SmallImage src={PhotoUrlHelper.GetPhotoUrl(url)} alt="Brand" /> : "N/A"),
+        title: "Trạng thái",
+        key: "isDefault",
+        render: (_, record: ProductStatusResponse) =>
+          record?.isDefault == true ? (
+            "Mặc định"
+          ) : (
+            <Button size="small" type="primary" onClick={() => handleSetDefault(record.uid)}>
+              Đặt làm mặc định
+            </Button>
+          ),
       },
       {
         title: "Ngày tạo",
@@ -87,11 +103,11 @@ const BodyTemplate = () => {
         title: "Thao tác",
         key: "actions",
         width: 100,
-        render: (_, record: BrandResponse) => (
+        render: (_, record: ProductStatusResponse) => (
           <Flex gap={10} wrap>
             <Popconfirm
-              title="Xóa thương hiệu"
-              description={`Bạn có chắc chắn muốn xóa thương hiệu "${record.name}"?`}
+              title="Xóa trạng thái sản phẩm"
+              description={`Bạn có chắc chắn muốn xóa trạng thái sản phẩm "${record.name}"?`}
               onConfirm={() => handleDelete(record.uid)}
               okText="Xóa"
               cancelText="Hủy"
@@ -114,7 +130,7 @@ const BodyTemplate = () => {
   const handleTableChange = (
     paginationConfig: TablePaginationConfig,
     filters: Record<string, FilterValue | null>,
-    sorter: SorterResult<BrandResponse> | SorterResult<any>[]
+    sorter: SorterResult<ProductStatusResponse> | SorterResult<any>[]
   ) => {
     const { current, pageSize } = paginationConfig;
 
@@ -136,7 +152,7 @@ const BodyTemplate = () => {
   };
 
   const createLinkEdit = (uid: string) => {
-    return `/brands/${uid}`;
+    return `/products/status/${uid}`;
   };
 
   const handleRefresh = () => {
@@ -158,6 +174,10 @@ const BodyTemplate = () => {
 
   const handleDelete = (uid: string) => {
     deleteItemMutation.mutate(uid);
+  };
+
+  const handleSetDefault = (uid: string) => {
+    setDefaultItemMutation.mutate(uid);
   };
 
   return (
