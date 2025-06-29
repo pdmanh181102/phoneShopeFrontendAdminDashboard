@@ -1,6 +1,7 @@
 import BrandClient from "@/apiClient/brand/BrandClient";
+import { getMessageApi } from "@/context/message/MessageContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Button, Form, Input, message, Modal } from "antd";
+import { Button, Form, Input, Modal } from "antd";
 import { debounce } from "lodash";
 import React, { useCallback, useState } from "react";
 
@@ -22,13 +23,13 @@ const FormCreate: React.FC<FormCreateProps> = ({ visible, onCancel, onSuccess })
   const createBrandMutation = useMutation({
     mutationFn: (data: CreateBrandFormData) => BrandClient.create(data),
     onSuccess: () => {
-      message.success("Thêm thương hiệu thành công!");
+      getMessageApi().success("Thêm thương hiệu thành công!");
       form.resetFields();
       setNameToCheck("");
       onSuccess();
     },
     onError: (error: any) => {
-      message.error(error?.message || "Có lỗi xảy ra khi thêm thương hiệu");
+      getMessageApi().error(error?.message || "Có lỗi xảy ra khi thêm thương hiệu");
     },
   });
 
@@ -54,7 +55,7 @@ const FormCreate: React.FC<FormCreateProps> = ({ visible, onCancel, onSuccess })
 
       // Nếu tên đã tồn tại, không cho submit
       if (isNameExists) {
-        message.error("Tên thương hiệu đã tồn tại!");
+        getMessageApi().error("Tên thương hiệu đã tồn tại!");
         return;
       }
 

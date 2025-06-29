@@ -1,29 +1,34 @@
 "use client";
 
 import BrandClient from "@/apiClient/brand/BrandClient";
+import EditButton from "@/components/button/editButton/EditButton";
 import FileButton from "@/components/button/fileButton/FileButton";
 import { PhotoUrlHelper } from "@/helpers/photoUrl/PhotoUrlHelper";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Descriptions, Flex, Image } from "antd";
-import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import FormEditName from "./components/formEditName/FormEditName";
 
-const BrandPage = () => {
+interface TemplateProps {
+  brandUid: string;
+}
+
+const BodyTemplate = ({ brandUid }: TemplateProps) => {
+  const router = useRouter();
   const [showEditNameModal, setShowEditNameModal] = useState(false);
-  const { uid } = useParams<{ uid: string }>();
   const { data, isFetching, refetch } = useQuery({
-    queryKey: ["brand", uid],
+    queryKey: ["brand", brandUid],
     queryFn: () => {
-      return BrandClient.readByUid(uid);
+      return BrandClient.readByUid(brandUid);
     },
   });
 
   const handleSelectFile = async (photo: File) => {
-    if (!uid || !photo) return;
+    if (!brandUid || !photo) return;
 
     try {
-      await BrandClient.updatePhoto(uid, photo);
+      await BrandClient.updatePhoto(brandUid, photo);
       await refetch(); // Cập nhật lại dữ liệu brand sau khi đổi ảnh
     } catch (error: any) {
       console.error("Lỗi khi cập nhật ảnh:", error.message);
@@ -43,10 +48,13 @@ const BrandPage = () => {
     setShowEditNameModal(false);
   };
 
+  const handleGotoProductLine = () => {
+    router.push(`/brands/${brandUid}/product-lines`);
+  };
+
   return (
     <>
       <Flex vertical gap={20}>
-        <h1>Chỉnh sửa thương hiệu</h1>
         <Descriptions
           bordered
           column={1}
@@ -70,10 +78,13 @@ const BrandPage = () => {
             Đổi ảnh
           </FileButton>
         </Flex>
+        <Flex gap={10}>
+          <EditButton onClick={handleGotoProductLine}>Dòng sản phẩm</EditButton>
+        </Flex>
       </Flex>
-      <FormEditName uid={uid} visible={showEditNameModal} onSuccess={handleCreateSuccess} onCancel={handleCreateCancel} />
+      <FormEditName uid={brandUid} visible={showEditNameModal} onSuccess={handleCreateSuccess} onCancel={handleCreateCancel} />
     </>
   );
 };
 
-export default BrandPage;
+export default BodyTemplate;

@@ -1,4 +1,5 @@
 "use client";
+import { MessageProvider } from "@/context/message/MessageContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConfigProvider, theme } from "antd";
 import React from "react";
@@ -20,7 +21,7 @@ const PageName = ({
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <>{children}</>
+        <MessageProvider>{children}</MessageProvider>
       </QueryClientProvider>
     </ConfigProvider>
   );
