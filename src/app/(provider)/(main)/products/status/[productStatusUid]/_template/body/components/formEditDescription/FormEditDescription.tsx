@@ -5,7 +5,7 @@ import { Button, Form, Modal } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import React from "react";
 
-interface FormEditNameProps {
+interface FormProps {
   visible: boolean;
   uid: string;
   onCancel: () => void;
@@ -16,7 +16,7 @@ interface FormData {
   name: string;
 }
 
-const FormEditDescription: React.FC<FormEditNameProps> = ({ visible, uid, onCancel, onSuccess }) => {
+const FormEditDescription: React.FC<FormProps> = ({ visible, uid, onCancel, onSuccess }) => {
   const [form] = Form.useForm<FormData>();
 
   // Mutation để tạo item mới

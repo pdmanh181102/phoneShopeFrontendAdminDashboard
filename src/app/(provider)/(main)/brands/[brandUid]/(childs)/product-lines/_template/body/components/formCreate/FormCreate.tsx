@@ -5,7 +5,7 @@ import { Button, Form, Input, Modal } from "antd";
 import { debounce } from "lodash";
 import React, { useCallback, useState } from "react";
 
-interface FormCreateProps {
+interface FormProps {
   brandUid: string;
   visible: boolean;
   onCancel: () => void;
@@ -16,12 +16,12 @@ interface FormData {
   name: string;
 }
 
-const FormCreate: React.FC<FormCreateProps> = ({ brandUid, visible, onCancel, onSuccess }) => {
+const FormCreate: React.FC<FormProps> = ({ brandUid, visible, onCancel, onSuccess }) => {
   const [form] = Form.useForm<FormData>();
   const [nameToCheck, setNameToCheck] = useState<string>("");
 
-  // Mutation để tạo brand mới
-  const createBrandMutation = useMutation({
+  // Mutation để tạo item mới
+  const createItemMutation = useMutation({
     mutationFn: (data: FormData) => ProductLineClient.create(brandUid, data),
     onSuccess: () => {
       getMessageApi().success("Thêm dòng sản phẩm thành công!");
@@ -34,9 +34,9 @@ const FormCreate: React.FC<FormCreateProps> = ({ brandUid, visible, onCancel, on
     },
   });
 
-  // Query để check tên brand có tồn tại không với debounce
+  // Query để check tên item có tồn tại không với debounce
   const { data: isNameExists, isFetching: isCheckingName } = useQuery({
-    queryKey: ["check-brand-name", nameToCheck],
+    queryKey: ["check-product-line-name", nameToCheck],
     queryFn: () => ProductLineClient.checkNameExists(brandUid, nameToCheck),
     enabled: nameToCheck.length >= 2, // Chỉ check khi có ít nhất 2 ký tự
     staleTime: 30000, // Cache 30 giây
@@ -60,7 +60,7 @@ const FormCreate: React.FC<FormCreateProps> = ({ brandUid, visible, onCancel, on
         return;
       }
 
-      createBrandMutation.mutate(values);
+      createItemMutation.mutate(values);
     } catch (error) {
       console.error("Validation failed:", error);
     }
@@ -84,8 +84,8 @@ const FormCreate: React.FC<FormCreateProps> = ({ brandUid, visible, onCancel, on
     }
   };
 
-  // Custom validator cho tên brand
-  const validateBrandName = async (_: any, value: string) => {
+  // Custom validator cho tên item
+  const validateItemName = async (_: any, value: string) => {
     if (!value || value.trim().length === 0) {
       return Promise.reject(new Error("Vui lòng nhập tên dòng sản phẩm"));
     }
@@ -112,7 +112,7 @@ const FormCreate: React.FC<FormCreateProps> = ({ brandUid, visible, onCancel, on
         <Form.Item
           label="Tên dòng sản phẩm"
           name="name"
-          rules={[{ validator: validateBrandName }]}
+          rules={[{ validator: validateItemName }]}
           validateStatus={isCheckingName ? "validating" : isNameExists ? "error" : nameToCheck.length >= 2 && !isNameExists ? "success" : ""}
           help={
             isCheckingName
@@ -130,7 +130,7 @@ const FormCreate: React.FC<FormCreateProps> = ({ brandUid, visible, onCancel, on
         <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <Button onClick={handleCancel}>Hủy</Button>
-            <Button type="primary" htmlType="submit" loading={createBrandMutation.isPending} disabled={isCheckingName || isNameExists}>
+            <Button type="primary" htmlType="submit" loading={createItemMutation.isPending} disabled={isCheckingName || isNameExists}>
               Thêm dòng sản phẩm
             </Button>
           </div>

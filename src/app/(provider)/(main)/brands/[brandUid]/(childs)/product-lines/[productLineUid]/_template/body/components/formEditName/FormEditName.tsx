@@ -5,7 +5,7 @@ import { Button, Form, Input, Modal } from "antd";
 import { debounce } from "lodash";
 import React, { useCallback, useState } from "react";
 
-interface FormEditNameProps {
+interface FormProps {
   visible: boolean;
   brandUid: string;
   uid: string;
@@ -17,7 +17,7 @@ interface FormData {
   name: string;
 }
 
-const FormEditName: React.FC<FormEditNameProps> = ({ visible, uid, brandUid, onCancel, onSuccess }) => {
+const FormEditName: React.FC<FormProps> = ({ visible, uid, brandUid, onCancel, onSuccess }) => {
   const [form] = Form.useForm<FormData>();
   const [nameToCheck, setNameToCheck] = useState<string>("");
 
