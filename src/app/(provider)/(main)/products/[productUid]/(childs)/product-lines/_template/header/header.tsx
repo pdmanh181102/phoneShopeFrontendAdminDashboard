@@ -1,17 +1,17 @@
 "use client";
 
-import BrandClient from "@/apiClient/brand/BrandClient";
+import ProductClient from "@/apiClient/product/ProductClient";
 import { useQuery } from "@tanstack/react-query";
 import { Breadcrumb, Flex } from "antd";
 interface TemplateProps {
-  brandUid: string;
+  productUid: string;
 }
 
-const HeaderTemplate = ({ brandUid }: TemplateProps) => {
-  const { data, isFetching, refetch } = useQuery({
-    queryKey: ["brand", brandUid],
+const HeaderTemplate = ({ productUid }: TemplateProps) => {
+  const { data: productData } = useQuery({
+    queryKey: ["product", productUid],
     queryFn: () => {
-      return BrandClient.readByUid(brandUid);
+      return ProductClient.readByUid(productUid);
     },
   });
 
@@ -23,10 +23,10 @@ const HeaderTemplate = ({ brandUid }: TemplateProps) => {
             title: <a href="/home">Home</a>,
           },
           {
-            title: <a href="/brands">Thương hiệu</a>,
+            title: <a href="/products">Sản phẩm</a>,
           },
           {
-            title: <a href={`/brands/${brandUid}`}>{data?.name}</a>,
+            title: <a href={`/products/${productUid}`}>{productData?.name}</a>,
           },
           {
             title: "Dòng sản phẩm",

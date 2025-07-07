@@ -5,17 +5,17 @@ import HeaderTemplate from "./_template/header/header";
 
 interface PageProps {
   params: {
-    brandUid: string;
+    productUid: string;
   };
 }
 
 const ProductLinesPage = async ({ params }: PageProps) => {
-  const { brandUid } = await params;
+  const { productUid } = await params;
 
   return (
     <Flex vertical gap={20}>
-      <HeaderTemplate brandUid={brandUid} />
-      <BodyTemplate brandUid={brandUid} />
+      <HeaderTemplate productUid={productUid} />
+      <BodyTemplate productUid={productUid} />
       <FooterTemplate />
     </Flex>
   );

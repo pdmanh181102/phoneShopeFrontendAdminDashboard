@@ -1,6 +1,6 @@
 "use client";
 
-import BrandClient from "@/apiClient/brand/BrandClient";
+import ProductClient from "@/apiClient/product/ProductClient";
 import DeleteButton from "@/components/button/deleteButton/DeleteButton";
 import EditButton from "@/components/button/editButton/EditButton";
 import SmallImage from "@/components/smallImage/SmallImage";
@@ -9,10 +9,14 @@ import DateHelper from "@/helpers/date/DateHelper";
 import { PhotoUrlHelper } from "@/helpers/photoUrl/PhotoUrlHelper";
 import { BrandResponse } from "@/models/apiResponse/brand/BrandResponse";
 import { PageResponse } from "@/models/apiResponse/page/PageResponse";
+import { ProductResponse } from "@/models/apiResponse/product/ProductResponse";
+import { ProductPhotoResponse } from "@/models/apiResponse/productPhoto/ProductPhotoResponse";
+import { ProductStatusResponse } from "@/models/apiResponse/productStatus/ProductStatusResponse";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, Flex, Popconfirm, Table, TableColumnsType, TablePaginationConfig } from "antd";
 import { FilterValue, SorterResult } from "antd/es/table/interface";
 import { useMemo, useState } from "react";
+import ProductFilter, { initProductFilterParams, ProductFilterParams } from "./components/filter/ProductFilter";
 import FormCreate from "./components/formCreate/FormCreate";
 
 interface Pagination {
@@ -23,6 +27,8 @@ interface Pagination {
 }
 
 const BodyTemplate = () => {
+  const [filterParams, setFilterParams] = useState<ProductFilterParams>(initProductFilterParams);
+
   const [pagination, setPagination] = useState<Pagination>({
     page: 0,
     size: 10,
@@ -32,26 +38,29 @@ const BodyTemplate = () => {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const { data, isFetching, refetch } = useQuery<PageResponse<BrandResponse>>({
-    queryKey: ["brands", pagination.page, pagination.size, pagination.sortBy, pagination.direction],
+  const { data, isFetching, refetch } = useQuery<PageResponse<ProductResponse>>({
+    queryKey: ["products", { filterParams, pagination }],
     queryFn: () => {
-      return BrandClient.readAll(pagination.page, pagination.size, pagination.sortBy, pagination.direction);
+      return ProductClient.readAll({
+        ...filterParams,
+        ...pagination,
+      });
     },
   });
 
   // Mutation để xóa item
   const deleteItemMutation = useMutation({
-    mutationFn: (uid: string) => BrandClient.delete(uid),
+    mutationFn: (uid: string) => ProductClient.delete(uid),
     onSuccess: () => {
-      getMessageApi().success("Xóa thương hiệu thành công!");
+      getMessageApi().success("Xóa sản phẩm thành công!");
       refetch(); // Refresh danh sách sau khi xóa
     },
     onError: (error: any) => {
-      getMessageApi().error(error?.message || "Có lỗi xảy ra khi xóa thương hiệu");
+      getMessageApi().error(error?.message || "Có lỗi xảy ra khi xóa sản phẩm");
     },
   });
 
-  const columns: TableColumnsType<BrandResponse> = useMemo(
+  const columns: TableColumnsType<ProductResponse> = useMemo(
     () => [
       {
         title: "UID",
@@ -59,16 +68,33 @@ const BodyTemplate = () => {
         key: "uid",
       },
       {
-        title: "Tên thương hiệu",
+        title: "Tên sản phẩm",
         dataIndex: "name",
         key: "name",
         sorter: true,
       },
       {
+        title: "Thương hiệu",
+        dataIndex: "brand",
+        key: "brand",
+        render: (brand: BrandResponse) => <>{brand.name}</>,
+      },
+      {
+        title: "Trạng thái",
+        dataIndex: "status",
+        key: "status",
+        render: (status: ProductStatusResponse) => <>{status.name}</>,
+      },
+      {
         title: "Hình ảnh",
-        dataIndex: "photoUrl",
         key: "photo",
-        render: (url: string) => (url ? <SmallImage src={PhotoUrlHelper.GetPhotoUrl(url)} alt="Brand" /> : "N/A"),
+        render: (_, record: ProductResponse) => {
+          const mainPhoto: ProductPhotoResponse | undefined = record.productPhotos.find((photo) => photo.isMain === true);
+          if (mainPhoto != undefined) {
+            return <SmallImage src={PhotoUrlHelper.GetPhotoUrl(mainPhoto.photoUrl)} />;
+          }
+          return "N/A";
+        },
       },
       {
         title: "Ngày tạo",
@@ -82,17 +108,17 @@ const BodyTemplate = () => {
         dataIndex: "updatedAt",
         key: "updatedAt",
         sorter: true,
-        render: (date: string) => new Date(date).toLocaleDateString("vi-VN"),
+        render: (date: string) => DateHelper.StringToDate(date),
       },
       {
         title: "Thao tác",
         key: "actions",
         width: 100,
-        render: (_, record: BrandResponse) => (
+        render: (_, record: ProductResponse) => (
           <Flex gap={10} wrap>
             <Popconfirm
-              title="Xóa thương hiệu"
-              description={`Bạn có chắc chắn muốn xóa thương hiệu "${record.name}"?`}
+              title="Xóa sản phẩm"
+              description={`Bạn có chắc chắn muốn xóa sản phẩm "${record.name}"?`}
               onConfirm={() => handleDelete(record.uid)}
               okText="Xóa"
               cancelText="Hủy"
@@ -115,7 +141,7 @@ const BodyTemplate = () => {
   const handleTableChange = (
     paginationConfig: TablePaginationConfig,
     filters: Record<string, FilterValue | null>,
-    sorter: SorterResult<BrandResponse> | SorterResult<any>[]
+    sorter: SorterResult<ProductResponse> | SorterResult<any>[]
   ) => {
     const { current, pageSize } = paginationConfig;
 
@@ -137,7 +163,7 @@ const BodyTemplate = () => {
   };
 
   const createLinkEdit = (uid: string) => {
-    return `/brands/${uid}`;
+    return `/products/${uid}`;
   };
 
   const handleRefresh = () => {
@@ -161,9 +187,13 @@ const BodyTemplate = () => {
     deleteItemMutation.mutate(uid);
   };
 
+  const handleFilterChange = (params: ProductFilterParams) => {
+    setFilterParams(params);
+  };
+
   return (
     <>
-      <Flex vertical gap={10}>
+      <Flex vertical gap={30}>
         <Flex gap={10}>
           <Button size="small" type="primary" onClick={handleAdd}>
             Thêm
@@ -172,6 +202,7 @@ const BodyTemplate = () => {
             Tải lại
           </Button>
         </Flex>
+        <ProductFilter onChange={handleFilterChange} />
         <Table
           loading={isFetching}
           columns={columns}

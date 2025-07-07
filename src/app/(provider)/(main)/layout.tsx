@@ -30,6 +30,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
         children: [
           {
             key: "3.1",
+            label: "Sản phẩm",
+            onClick: () => router.push("/products"),
+          },
+          {
+            key: "3.2",
             label: "Trạng thái",
             onClick: () => router.push("/products/status"),
           },

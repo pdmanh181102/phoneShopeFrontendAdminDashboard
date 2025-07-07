@@ -43,7 +43,7 @@ export default class ProductLineClient {
    * Đọc dòng sản phẩm theo page
    */
   static async readAll(
-    brandUid: string,
+    brandUids: string[],
     page: number,
     size: number,
     sortBy: string,
@@ -55,7 +55,8 @@ export default class ProductLineClient {
       sortBy: sortBy,
       direction: direction,
     });
-    const url = `${ApiClientConfig.url}/brands/${brandUid}/${endPoint}?${query.toString()}`;
+    brandUids.forEach((uid) => query.append("brandUids", uid));
+    const url = `${ApiClientConfig.url}/${endPoint}?${query.toString()}`;
     const response = await fetch(url);
     if (!response.ok) {
       const error = response.json() as unknown as ErrorResponse;
@@ -100,6 +101,7 @@ export default class ProductLineClient {
 
     // Không cần return gì cho DELETE
   }
+
   /**
    * Kiểm tra tên dòng sản phẩm có tồn tại không
    */
